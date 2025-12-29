@@ -49,3 +49,18 @@ def rename_receipt(r: RenameRequest, x_renamer_secret: str = Header("")):
 
     dbx.files_move_v2(r.dropbox_path, new_path, autorename=True)
     return {"status": "ok", "new_name": new_name}
+@app.get("/list_pdfs")
+def list_pdfs(folder: str, x_renamer_secret: str = Header("")):
+    if x_renamer_secret != get_secret():
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    dbx = get_dbx()
+
+    result = dbx.files_list_folder(folder)
+    pdfs = []
+
+    for entry in result.entries:
+        if entry.name.lower().endswith(".pdf"):
+            pdfs.append(entry.path_display)
+
+    return {"pdf_files": pdfs}
